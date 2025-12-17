@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 // 折扣選項配置
 export const promoOptions = {
   '自拍第二set優惠': { type: 'fixed', value: 64.5 },    // minus $64.5
+  '兩部$170菲林折扣': { type: 'fixed', value: 20 }, 
   '送/廢': { type: 'percent', value: 100 } // 100% off
 }
 

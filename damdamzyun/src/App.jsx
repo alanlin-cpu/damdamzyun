@@ -11,7 +11,7 @@ export default function App() {
   // moved to config.js
 
   const [user, setUser] = useState(null)
-  const [cart, setCart] = useState([])  // { item, quantity, sweetness, ice }
+  const [cart, setCart] = useState([])  // { item, quantity, customOptions }
   const [orders, setOrders] = useState([])
   const [archives, setArchives] = useState([]) // settlement archives
   const [currentPage, setCurrentPage] = useState('menu') // 'menu' or 'history'
@@ -369,22 +369,22 @@ export default function App() {
   }
 
   // 加入購物車（帶客製化選項）
-  const handleAddItem = ({ item, sweetness, ice }) => {
+  const handleAddItem = ({ item, customOptions }) => {
     if (!item) return
     setCart((prev) => {
       const existing = prev.find(
         entry => entry.item.id === item.id &&
-                 entry.sweetness === sweetness &&
-                 entry.ice === ice
+                 entry.item.price === item.price &&
+                 entry.customOptions === customOptions
       )
       if (existing) {
         return prev.map(entry =>
-          entry.item.id === item.id && entry.sweetness === sweetness && entry.ice === ice
+          entry.item.id === item.id && entry.item.price === item.price && entry.customOptions === customOptions
             ? { ...entry, quantity: entry.quantity + 1 }
             : entry
         )
       }
-      return [...prev, { item, quantity: 1, sweetness, ice }]
+      return [...prev, { item, quantity: 1, customOptions }]
     })
   }
 
@@ -436,8 +436,7 @@ export default function App() {
       .map(entry => ({
         ...entry.item,
         quantity: entry.quantity,
-        sweetness: entry.sweetness,
-        ice: entry.ice
+        customOptions: entry.customOptions
       }))
       .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
 
@@ -707,7 +706,7 @@ export default function App() {
                 <li key={index} className="cart-item">
                   <span>
                     {entry.item.name} x{entry.quantity} • ${entry.item.price}<br />
-                    <small>{entry.sweetness} ・ {entry.ice}</small>
+                    {entry.customOptions && <small>{entry.customOptions}</small>}
                   </span>
                   <div className="quantity-controls">
                     <button className="quantity-btn quantity-btn-minus" onClick={() => updateQuantity(index, -1)}>−</button>
