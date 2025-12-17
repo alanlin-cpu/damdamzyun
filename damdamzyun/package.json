@@ -2,7 +2,7 @@
   "name": "OrderSystem",
   "version": "1.0.0",
   "private": true,
-  "homepage": "https://alanlin-cpu.github.io/OrderSystem/",
+  "homepage": "https://alanlin-cpu.github.io/damdamzyun/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
