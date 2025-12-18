@@ -12,7 +12,7 @@ export default function OrderHistory({ orders, user, onBack, onDeleteOrder, onSe
   const isDeleted = (o) => o.deleted || !!o.deletedAt
 
   // 篩選訂單 - 使用 useMemo 快取
-  const paymentMap = { cash: '現金', card: '信用卡', linepay: 'Line Pay' }
+  const paymentMap = { cash: 'Cash', mpay: 'Mpay', code: 'Code' }
 
   const filtered = useMemo(() => {
     return orders.filter(order => {
@@ -61,9 +61,9 @@ export default function OrderHistory({ orders, user, onBack, onDeleteOrder, onSe
           <label>付款方式</label>
           <select value={filterPayment} onChange={(e) => setFilterPayment(e.target.value)}>
             <option value="">-- 全部 --</option>
-            <option value="cash">現金</option>
-            <option value="card">信用卡</option>
-            <option value="linepay">Line Pay</option>
+            <option value="cash">Cash</option>
+            <option value="mpay">Mpay</option>
+            <option value="code">Code</option>
           </select>
         </div>
         <div className="filter-result">
@@ -238,9 +238,10 @@ export default function OrderHistory({ orders, user, onBack, onDeleteOrder, onSe
                   <tbody>
                     {(() => {
                       const counts = {}
-                      const payTotals = {cash:0,card:0,linepay:0}
+                      const payTotals = {cash:0,mpay:0,code:0}
                       let totalDiscount = 0
                       let totalRevenue = 0
+                      let totalChange = 0
                       
                       // 一次遍歷計算所有統計
                       filtered.forEach(o => {
@@ -256,10 +257,11 @@ export default function OrderHistory({ orders, user, onBack, onDeleteOrder, onSe
                         }
                         totalDiscount += Number(o.discountAmount||0)
                         totalRevenue += Number(o.total||0)
+                        totalChange += Number(o.changeAmount||0)
                       })
                       
                       // 儲存到 window 供其他區塊使用（避免重複計算）
-                      window._settlementCache = { counts, payTotals, totalDiscount, totalRevenue }
+                      window._settlementCache = { counts, payTotals, totalDiscount, totalRevenue, totalChange }
                       
                       return Object.keys(counts).sort((a,b)=>String(a).localeCompare(String(b))).map((name) => (
                         <tr key={name}><td>{name}</td><td style={{textAlign:'right'}}>{counts[name]}</td></tr>
@@ -300,13 +302,14 @@ export default function OrderHistory({ orders, user, onBack, onDeleteOrder, onSe
               <table className="settle-summary" style={{width:'100%'}}>
                 <tbody>
                     {(() => {
-                      const { payTotals, totalDiscount, totalRevenue } = window._settlementCache || { payTotals: {cash:0,card:0,linepay:0}, totalDiscount: 0, totalRevenue: 0 }
+                      const { payTotals, totalDiscount, totalRevenue, totalChange } = window._settlementCache || { payTotals: {cash:0,mpay:0,code:0}, totalDiscount: 0, totalRevenue: 0, totalChange: 0 }
                       return (
                         <>
-                          <tr><td>付款方式：現金</td><td style={{textAlign:'right'}}>${payTotals.cash}</td></tr>
-                          <tr><td>付款方式：信用卡</td><td style={{textAlign:'right'}}>${payTotals.card}</td></tr>
-                          <tr><td>付款方式：Line Pay</td><td style={{textAlign:'right'}}>${payTotals.linepay}</td></tr>
-                          <tr><td>折扣總數</td><td style={{textAlign:'right'}}>${totalDiscount}</td></tr>
+                          <tr><td>付款方式：Cash</td><td style={{textAlign:'right'}}>${payTotals.cash}</td></tr>
+                          <tr><td style={{paddingLeft:'20px',fontSize:'0.9em',color:'#666'}}>已找續</td><td style={{textAlign:'right',fontSize:'0.9em',color:'#666'}}>-${totalChange}</td></tr>
+                          <tr><td>付款方式：Mpay</td><td style={{textAlign:'right'}}>${payTotals.mpay}</td></tr>
+                          <tr><td>付款方式：Code</td><td style={{textAlign:'right'}}>${payTotals.code}</td></tr>
+                          <tr><td style={{paddingLeft:'20px',fontSize:'0.9em',color:'#666'}}>折扣總數</td><td style={{textAlign:'right',fontSize:'0.9em',color:'#666'}}>-${totalDiscount}</td></tr>
                           <tr><td>總收入</td><td style={{textAlign:'right'}}>${totalRevenue}</td></tr>
                         </>
                       )

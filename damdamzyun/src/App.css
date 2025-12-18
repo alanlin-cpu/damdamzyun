@@ -1193,7 +1193,10 @@
   .modal {
     padding: 20px;
     width: 90%;
-    max-height: calc(100vh - 40px);
+    max-height: 85vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
   }
 
   .modal-title {

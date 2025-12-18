@@ -6,9 +6,17 @@ export const categoryColors = {
   '自拍館': '#4ECDC4',         // 青綠色 - 自拍館
   'set': '#FFD93D',            // 金黃色 - 套餐
   '零售': '#95E1D3',           // 薄荷綠 - 零售商品
-  '菲林鎖匙扣': '#A78BFA',     // 紫色 - 菲林鎖匙扣
   '周邊': '#FB8500'            // 橙色 - 周邊商品
 }
+
+// 分類顯示名稱與順序
+export const categoryOrder = [
+  { key: 'film', label: '📷 菲林底片' },
+  { key: '周邊', label: '🎁 周邊商品' },
+  { key: '自拍館', label: '🎨 自拍館' },
+  { key: 'set', label: '🍽️ 套餐' },
+  { key: '零售', label: '🛒 零售商品' }
+]
 
 export const menuItems = [
   // 菲林底片
@@ -45,19 +53,17 @@ export const menuItems = [
   { id: 28, name: 'Mini相框(IG)', price: 20, category: '零售' },
   { id: 29, name: 'Wide相框(透明)', price: 20, category: '零售' },
   
-  // 菲林鎖匙扣
-  { id: 15, name: '菲林鎖匙扣', price: 45, category: '菲林鎖匙扣' },
-  
   // 周邊商品
   { id: 13, name: 'Mini CD', price: 45, category: '周邊' },
   { id: 14, name: '半透菲林', price: 40, category: '周邊' },
+  { id: 15, name: '菲林鎖匙扣', price: 45, category: '周邊' },
   { id: 30, name: '摺機', price: 69, category: '周邊' },
   { id: 31, name: '大電視', price: 69, category: '周邊' },
   { id: 32, name: '小電視', price: 40, category: '周邊' }
 ]
 
-// 需要客製化選項的類別
-export const customizableCategories = ['菲林鎖匙扣']
+// 需要客製化選項的商品（根據名稱判斷）
+export const customizableItems = ['菲林鎖匙扣']
 
 // 菲林鎖匙扣選項
 export const keychainQuantityOptions = [
@@ -71,8 +77,8 @@ export default function Menu({ menu = menuItems, onAddItem }) {
   const [isCustom, setIsCustom] = useState(false)
 
   const handleItemClick = (item) => {
-    // 如果是需要客製化的類別，打開彈窗
-    if (customizableCategories.includes(item.category)) {
+    // 如果是需要客製化的商品，打開彈窗
+    if (customizableItems.includes(item.name)) {
       setSelectedItem(item)
       setQuantity(keychainQuantityOptions[0])
       setIsCustom(false)
@@ -87,7 +93,7 @@ export default function Menu({ menu = menuItems, onAddItem }) {
   const addToCartWithOptions = () => {
     if (!selectedItem || !onAddItem) return
     
-    if (selectedItem.category === '菲林鎖匙扣') {
+    if (selectedItem.name === '菲林鎖匙扣') {
       // 計算最終價格
       const finalPrice = quantity.price + (isCustom ? 15 : 0)
       const customOptions = `${quantity.label}${isCustom ? ' (訂製款)' : ''}`
@@ -106,23 +112,42 @@ export default function Menu({ menu = menuItems, onAddItem }) {
     <>
       <div className="column">
         <h3 className="section-title">菜單</h3>
-        <div className="menu-grid">
-          {menu.map(item => (
-            <div
-              key={item.id}
-              className="menu-card"
-              onClick={() => handleItemClick(item)}
-              style={{ borderLeft: `4px solid ${categoryColors[item.category] || '#ccc'}` }}
-            >
-              <div className="menu-card-name" style={{ color: categoryColors[item.category] || '#333' }}>{item.name}</div>
-              <div className="menu-card-price" style={{ color: '#555' }}>${item.price}</div>
+        {categoryOrder.map(({ key, label }) => {
+          const categoryItems = menu.filter(item => item.category === key)
+          if (categoryItems.length === 0) return null
+          
+          return (
+            <div key={key} style={{ marginBottom: '24px' }}>
+              <h4 style={{ 
+                fontSize: '1.1em', 
+                fontWeight: 'bold', 
+                color: categoryColors[key] || '#333',
+                marginBottom: '12px',
+                paddingLeft: '8px',
+                borderLeft: `4px solid ${categoryColors[key] || '#ccc'}`
+              }}>
+                {label}
+              </h4>
+              <div className="menu-grid">
+                {categoryItems.map(item => (
+                  <div
+                    key={item.id}
+                    className="menu-card"
+                    onClick={() => handleItemClick(item)}
+                    style={{ borderLeft: `4px solid ${categoryColors[item.category] || '#ccc'}` }}
+                  >
+                    <div className="menu-card-name" style={{ color: categoryColors[item.category] || '#333' }}>{item.name}</div>
+                    <div className="menu-card-price" style={{ color: '#555' }}>${item.price}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
+          )
+        })}
       </div>
 
       {/* 客製化彈出視窗 - 菲林鎖匙扣 */}
-      {selectedItem && selectedItem.category === '菲林鎖匙扣' && (
+      {selectedItem && selectedItem.name === '菲林鎖匙扣' && (
         <div className="modal-overlay" onClick={() => setSelectedItem(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-title">{selectedItem.name}</div>

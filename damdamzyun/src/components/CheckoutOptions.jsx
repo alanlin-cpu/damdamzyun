@@ -10,7 +10,7 @@ export const promoOptions = {
 // 付款方式選項配置
 export const paymentOptions = [
   { value: 'cash', label: '現金', icon: '💵' },
-  { value: 'Mpay', label: 'Mpay', icon: '💳' },
+  { value: 'mpay', label: 'Mpay', icon: '💳' },
   { value: 'code', label: 'Code', icon: '💲' }
 ]
 
