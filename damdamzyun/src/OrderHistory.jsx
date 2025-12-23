@@ -225,7 +225,7 @@ export default function OrderHistory({ orders, user, onBack, onDeleteOrder, onSe
         <div className="modal-overlay" onClick={() => setSettleOpen(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>結算預覽</h3>
-            <p>本次結算將處理所有訂單，共 {orders.length} 筆（包含已標記為已刪除的記錄）</p>
+            <p>本次結算將處理 {activeOrders.length} 筆有效訂單（不包含已刪除的訂單）</p>
 
             {/* 1. 每樣產品販售數量 (忽略客製化) */}
             <div className="settle-body">
@@ -243,8 +243,8 @@ export default function OrderHistory({ orders, user, onBack, onDeleteOrder, onSe
                       let totalRevenue = 0
                       let totalChange = 0
                       
-                      // 一次遍歷計算所有統計
-                      filtered.forEach(o => {
+                      // 一次遍歷計算所有統計 - 只計算未刪除的訂單
+                      activeOrders.forEach(o => {
                         o.items.forEach(it => { 
                           counts[it.name] = (counts[it.name]||0) + (it.quantity||1) 
                         })
