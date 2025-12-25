@@ -249,11 +249,29 @@ export default function OrderHistory({ orders, user, onBack, onDeleteOrder, onSe
                           counts[it.name] = (counts[it.name]||0) + (it.quantity||1) 
                         })
                         if (o.paymentAmounts && typeof o.paymentAmounts === 'object') {
+                          // 新格式：paymentAmounts 物件 { cash: 50, mpay: 20 }
                           Object.entries(o.paymentAmounts).forEach(([method, amt]) => {
                             payTotals[method] = (payTotals[method]||0) + Number(amt||0)
                           })
-                        } else {
-                          payTotals[o.paymentMethod] = (payTotals[o.paymentMethod]||0) + Number(o.total||0)
+                        } else if (o.paymentMethod) {
+                          // 舊格式：paymentMethod 可能是 "cash:70; mpay:30" 或單一 "cash" 或 "mpay:70"
+                          const pmStr = String(o.paymentMethod)
+                          if (pmStr.includes(';')) {
+                            // 多支付方式字串格式："cash:70; mpay:30"
+                            pmStr.split(';').forEach(part => {
+                              const [method, amtStr] = part.trim().split(':')
+                              if (method) {
+                                payTotals[method] = (payTotals[method]||0) + Number(amtStr || o.total || 0)
+                              }
+                            })
+                          } else if (pmStr.includes(':')) {
+                            // 單一支付方式帶金額："mpay:70"
+                            const [method, amtStr] = pmStr.split(':')
+                            payTotals[method] = (payTotals[method]||0) + Number(amtStr || 0)
+                          } else {
+                            // 單一支付方式不帶金額："cash"
+                            payTotals[pmStr] = (payTotals[pmStr]||0) + Number(o.total||0)
+                          }
                         }
                         totalDiscount += Number(o.discountAmount||0)
                         totalRevenue += Number(o.total||0)
