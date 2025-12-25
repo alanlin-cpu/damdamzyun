@@ -243,7 +243,7 @@ export default function OrderHistory({ orders, user, onBack, onDeleteOrder, onSe
                       let totalRevenue = 0
                       let totalChange = 0
                       
-                      // 一次遍歷計算所有統計 - 只計算未刪除的訂單
+                      // 一次遍歷計算所有統計 - 只計算未刪除的訂單（所有用戶／裝置）
                       activeOrders.forEach(o => {
                         o.items.forEach(it => { 
                           counts[it.name] = (counts[it.name]||0) + (it.quantity||1) 
