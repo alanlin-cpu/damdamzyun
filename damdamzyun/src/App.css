@@ -90,55 +90,123 @@
 }
 
 .cart-item {
-  padding: 16px 0;
-  border-bottom: 1px solid #eee;
+  background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 2px 8px rgba(101, 115, 195, 0.15);
+  border: 1px solid #b39ddb;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cart-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #7e57c2, #9575cd);
+}
+
+.cart-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(101, 115, 195, 0.25);
 }
 
 .cart-item > span {
   flex: 1;
   min-width: 0;
   word-wrap: break-word;
+  color: #4527a0;
+  font-size: 1.05em;
+  font-weight: 500;
+  line-height: 1.5;
+  padding-left: 8px;
+}
+
+.cart-item > span small {
+  display: block;
+  margin-top: 4px;
+  color: #5e35b1;
+  font-size: 0.85em;
+  background: rgba(103, 58, 183, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-block;
 }
 
 .cart-item:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
 }
 
 .quantity-controls {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 8px 12px;
+  border-radius: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .quantity-btn {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border: none;
   border-radius: 50%;
-  font-size: 1.4em;
+  font-size: 1.3em;
   font-weight: bold;
   cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.quantity-btn-minus { background: #f44336; color: white; }
-.quantity-btn-plus { background: #4caf50; color: white; }
+.quantity-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.quantity-btn:active {
+  transform: scale(0.95);
+}
+
+.quantity-btn-minus { 
+  background: linear-gradient(135deg, #f44336, #e53935);
+  color: white;
+}
+
+.quantity-btn-plus { 
+  background: linear-gradient(135deg, #4caf50, #66bb6a);
+  color: white;
+}
 
 .quantity {
   font-size: 1.3em;
-  min-width: 50px;
+  min-width: 45px;
   text-align: center;
   font-weight: bold;
+  color: #333;
+  background: white;
+  padding: 4px 8px;
+  border-radius: 8px;
 }
 
 .empty-cart {
   text-align: center;
-  padding: 40px;
+  padding: 60px 20px;
   color: #999;
   font-size: 1.2em;
   font-style: italic;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 12px;
+  border: 2px dashed #ddd;
+  margin-bottom: 20px;
 }
 
 /* 結帳區 */
@@ -616,7 +684,7 @@
 .settle-summary td:first-child { text-align: left }
 
 /* tighter modal content layout */
-.modal .bar-chart { max-height: 220px; overflow: auto }
+.modal .bar-chart { overflow: visible; }
 .modal h3, .modal h4 { margin: 0 0 12px 0 }
 .modal p { margin: 6px 0 16px 0; color: #555 }
 
@@ -813,6 +881,11 @@
 
 .orders-table .payment {
   text-align: center;
+}
+
+/* 訂單卡片容器（移動版） - 桌面版預設隱藏 */
+.orders-cards-wrapper {
+  display: none;
 }
 
 /* 已刪除訂單 */
@@ -1027,6 +1100,11 @@
     width: 100%;
     padding: 16px;
     overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  .cart-list {
+    margin: 0 0 20px 0;
   }
 
   .section-title {
@@ -1053,34 +1131,46 @@
     font-size: 1.1em;
   }
 
-  /* 購物車項目 */
+  /* 購物車項目 - 簡約設計 */
   .cart-item {
-    padding: 12px 0;
-    flex-direction: column;
-    align-items: flex-start;
+    padding: 12px;
+    margin-bottom: 10px;
+    flex-direction: row;
+    align-items: center;
     gap: 8px;
-    width: 100%;
   }
 
   .cart-item > span {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     word-wrap: break-word;
+    font-size: 0.9em;
+    line-height: 1.4;
+    padding-left: 4px;
+  }
+
+  .cart-item > span small {
+    font-size: 0.8em;
+    margin-top: 2px;
+    padding: 2px 6px;
   }
 
   .quantity-controls {
-    align-self: flex-end;
-    gap: 12px;
+    flex-shrink: 0;
+    gap: 6px;
+    padding: 4px 8px;
   }
 
   .quantity-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 1.2em;
+    width: 30px;
+    height: 30px;
+    font-size: 1.1em;
   }
 
   .quantity {
-    font-size: 1.1em;
-    min-width: 40px;
+    font-size: 1em;
+    min-width: 32px;
+    padding: 2px 6px;
   }
 
   /* 結帳區塊 */
@@ -1282,6 +1372,159 @@
     min-width: 100%;
   }
 
+  /* 移動版：隱藏表格，顯示卡片 */
+  .orders-table-wrapper {
+    display: none;
+  }
+
+  .orders-cards-wrapper {
+    display: block;
+  }
+
+  /* 訂單卡片樣式 */
+  .order-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e0e0e0;
+  }
+
+  .order-card.deleted {
+    background: #f5f5f5;
+    opacity: 0.7;
+  }
+
+  .order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .order-card-time {
+    font-size: 0.85em;
+    color: #666;
+  }
+
+  .order-card-id {
+    font-size: 0.85em;
+    color: #999;
+    text-align: right;
+  }
+
+  .order-card-body {
+    margin-bottom: 12px;
+  }
+
+  .order-card-section {
+    margin-bottom: 10px;
+  }
+
+  .order-card-label {
+    font-size: 0.8em;
+    color: #666;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+
+  .order-card-items {
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+
+  .order-card-item {
+    padding: 6px 0;
+    font-size: 0.9em;
+    line-height: 1.5;
+    border-bottom: 1px solid #eee;
+  }
+
+  .order-card-item:last-child {
+    border-bottom: none;
+  }
+
+  .order-card-item-name {
+    font-weight: bold;
+    color: #333;
+  }
+
+  .order-card-item-option {
+    color: #999;
+    font-size: 0.9em;
+  }
+
+  .order-card-amounts {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .order-card-amount {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: #f9f9f9;
+    border-radius: 6px;
+    font-size: 0.9em;
+  }
+
+  .order-card-amount.total {
+    grid-column: 1 / -1;
+    background: #e3f2fd;
+    font-weight: bold;
+    font-size: 1.05em;
+  }
+
+  .order-card-amount .amount-value {
+    font-weight: bold;
+    color: #e91e63;
+  }
+
+  .order-card-amount.total .amount-value {
+    font-size: 1.2em;
+  }
+
+  .order-card-discount {
+    color: #4caf50;
+    font-weight: bold;
+  }
+
+  .order-card-payment {
+    background: #fff3e0;
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+
+  .order-card-payment-method {
+    font-size: 0.9em;
+    margin-bottom: 2px;
+  }
+
+  .order-card-deleted-info {
+    background: #ffebee;
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 0.85em;
+    color: #d32f2f;
+  }
+
+  .order-card-footer {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+  }
+
   /* 訂單表格 */
   .orders-table {
     font-size: 0.85em;
@@ -1289,10 +1532,6 @@
 
   .orders-table th, .orders-table td {
     padding: 10px 8px;
-  }
-
-  .orders-table .items summary {
-    font-size: 0.9em;
   }
 
   .btn-delete {

@@ -71,10 +71,11 @@ export default function OrderHistory({ orders, user, onBack, onDeleteOrder, onSe
         </div>
       </div>
 
-      {/* 訂單表格 */}
+      {/* 訂單表格（桌面版） */}
       {filtered.length === 0 ? (
         <div className="empty-orders">查無訂單</div>
       ) : (
+        <>
         <div className="orders-table-wrapper">
           <table className="orders-table">
             <thead>
@@ -103,7 +104,7 @@ export default function OrderHistory({ orders, user, onBack, onDeleteOrder, onSe
                   </td>
                   <td className="user">{order.user}</td>
                   <td className="items">
-                    <details>
+                    <details open>
                       <summary>{order.items.length} 項</summary>
                       <ul className="item-details">
                         {order.items.map((item, i) => (
@@ -183,6 +184,140 @@ export default function OrderHistory({ orders, user, onBack, onDeleteOrder, onSe
             </tbody>
           </table>
         </div>
+
+        {/* 訂單卡片（移動版） */}
+        <div className="orders-cards-wrapper">
+          {filtered.map((order, idx) => (
+            <div key={idx} className={`order-card ${isDeleted(order) ? 'deleted' : ''}`}>
+              {/* 卡片標題：時間 + 編號 */}
+              <div className="order-card-header">
+                <div className="order-card-time">
+                  {new Date(order.timestamp).toLocaleString('zh-TW')}
+                </div>
+                <div className="order-card-id">
+                  #{order.orderID || '—'}
+                  {syncFailedOrders.has(order.orderID) && (
+                    <span title="本機保留，雲端同步失敗" style={{marginLeft: '4px'}}>⚠️</span>
+                  )}
+                </div>
+              </div>
+
+              {/* 卡片內容 */}
+              <div className="order-card-body">
+                {/* 員工 */}
+                <div className="order-card-section">
+                  <div className="order-card-label">員工</div>
+                  <div style={{fontWeight: 'bold', color: '#333'}}>{order.user}</div>
+                </div>
+
+                {/* 品項列表 */}
+                <div className="order-card-section">
+                  <div className="order-card-label">品項 ({order.items.length})</div>
+                  <div className="order-card-items">
+                    {order.items.map((item, i) => (
+                      <div key={i} className="order-card-item">
+                        <div className="order-card-item-name">
+                          {item.name} x{item.quantity} • ${item.price}
+                        </div>
+                        {(item.sweetness || item.ice) && (
+                          <div className="order-card-item-option">
+                            {item.sweetness && <span>{item.sweetness}</span>}
+                            {item.sweetness && item.ice && <span> • </span>}
+                            {item.ice && <span>{item.ice}</span>}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 金額區塊 */}
+                <div className="order-card-amounts">
+                  <div className="order-card-amount">
+                    <span>小計</span>
+                    <span className="amount-value">${order.subtotal}</span>
+                  </div>
+                  <div className="order-card-amount">
+                    <span>折扣</span>
+                    <span className="order-card-discount">
+                      {order.discountAmount > 0 ? (
+                        <>-${order.discountAmount}
+                        {order.promoCode && <small> ({order.promoCode})</small>}
+                        </>
+                      ) : '-'}
+                    </span>
+                  </div>
+                  <div className="order-card-amount total">
+                    <span>總計</span>
+                    <span className="amount-value">${order.total}</span>
+                  </div>
+                </div>
+
+                {/* 付款方式 */}
+                <div className="order-card-section">
+                  <div className="order-card-label">付款方式</div>
+                  <div className="order-card-payment">
+                    {order.paymentAmounts && Object.keys(order.paymentAmounts).length > 0 ? (
+                      <>
+                        {Object.entries(order.paymentAmounts).map(([method, amount]) => (
+                          <div key={method} className="order-card-payment-method">
+                            {paymentMap[method] || method}: ${amount}
+                          </div>
+                        ))}
+                        <div style={{marginTop: 4, fontSize: '0.85em', color: '#666'}}>
+                          實收：${Object.values(order.paymentAmounts).reduce((s,a)=>s+Number(a||0),0)}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="order-card-payment-method">
+                        {paymentMap[order.paymentMethod] || order.paymentMethod || '-'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 刪除資訊 */}
+                {(isDeleted(order) || order.deletedBy) && (
+                  <div className="order-card-deleted-info">
+                    <div style={{fontWeight: 'bold', marginBottom: 4}}>【已刪除】</div>
+                    {order.deletedBy && <div>刪除者: {order.deletedBy}</div>}
+                    {order.deletedAt && <div>{new Date(order.deletedAt).toLocaleString('zh-TW')}</div>}
+                  </div>
+                )}
+              </div>
+
+              {/* 操作按鈕 */}
+              {!isDeleted(order) && (
+                <div className="order-card-footer">
+                  {user === 'admin' && syncFailedOrders.has(order.orderID) && (
+                    <button 
+                      className="btn-retry" 
+                      onClick={async () => {
+                        const orderID = order.orderID
+                        if (retryingOrders.has(orderID)) return
+                        setRetryingOrders(prev => new Set(prev).add(orderID))
+                        try {
+                          await onRetryUpload(idx)
+                        } finally {
+                          setRetryingOrders(prev => {
+                            const next = new Set(prev)
+                            next.delete(orderID)
+                            return next
+                          })
+                        }
+                      }}
+                      disabled={retryingOrders.has(order.orderID)}
+                    >
+                      {retryingOrders.has(order.orderID) ? '上傳中...' : '🔄 重新上傳'}
+                    </button>
+                  )}
+                  <button className="btn-delete" onClick={() => deleteOrder(idx)}>🗑 刪除</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        </>
       )}
 
       {/* 自訂刪除確認對話框 */}
