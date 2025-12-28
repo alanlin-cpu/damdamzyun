@@ -1,4 +1,4 @@
-const SPREADSHEET_ID = '1m2TkzWJb1U-jTm6JKDAnmM-WsHY1NbMlxQwVa_q-jx8';
+const SPREADSHEET_ID = '1q6tvxWyaPy5pr-IqxGG-uvBPZ2-NdQW2pk_4mPV5y44';
 const ORDERS_SHEET = 'orders';
 const LOGS_SHEET = 'Logs';
 const USERS_SHEET = 'Users';
@@ -48,16 +48,129 @@ function doPost(e) {
       ];
       settlementSheet.appendRow(summaryRow);
 
-      // 建立批次明細工作表（名稱為批次ID），逐筆寫入人類可讀的品項字串
-      const detailSheetName = batchId || `Settlement_${Utilities.getUuid()}`;
-      const detailSheet = ss.getSheetByName(detailSheetName) || ss.insertSheet(detailSheetName);
-      // 明細表頭
-      if (detailSheet.getLastRow() === 0) {
-        detailSheet.appendRow(['時間', '訂單編號', '員工', '品項', '小計', '折扣', '總計', '付款方式', '折扣代碼', '刪除者', '刪除時間']);
+      // 建立批次明細工作表（名稱為日期格式：MM-DD）
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const baseSheetName = `${month}-${day}`;
+      let detailSheetName = baseSheetName;
+      
+      // 如果同名工作表已存在，加上序號 (2), (3), (4)...
+      let counter = 2;
+      while (ss.getSheetByName(detailSheetName)) {
+        detailSheetName = `${baseSheetName}(${counter})`;
+        counter++;
       }
+      
+      const detailSheet = ss.insertSheet(detailSheetName);
+      
+      // 計算支付方式彙總
+      const paymentSummary = { cash: 0, mpay: 0, code: 0 };  // 初始化所有支付方式
+      let totalChange = 0;
+      let totalDiscount = 0;
+      let totalIncome = 0;
+      
+      orders.forEach(o => {
+        const discount = Number(o.discountAmount || 0);
+        const total = Number(o.total || 0);
+        
+        // 優先使用 paymentAmounts 物件（新格式）
+        if (o.paymentAmounts && typeof o.paymentAmounts === 'object') {
+          Object.entries(o.paymentAmounts).forEach(([method, amt]) => {
+            const normalizedMethod = String(method || '').toLowerCase();
+            paymentSummary[normalizedMethod] = (paymentSummary[normalizedMethod] || 0) + Number(amt || 0);
+          });
+        } else if (o.paymentMethod) {
+          // Fallback: 解析 paymentMethod 字串（舊格式）
+          const pmStr = String(o.paymentMethod);
+          if (pmStr.includes(';')) {
+            // 多支付方式格式："cash:70; mpay:30"
+            pmStr.split(';').forEach(part => {
+              const [method, amtStr] = part.trim().split(':');
+              if (method) {
+                const normalizedMethod = method.toLowerCase();
+                paymentSummary[normalizedMethod] = (paymentSummary[normalizedMethod] || 0) + Number(amtStr || 0);
+              }
+            });
+          } else if (pmStr.includes(':')) {
+            // 單一支付方式帶金額："cash:70"
+            const [method, amtStr] = pmStr.split(':');
+            const normalizedMethod = method.toLowerCase();
+            paymentSummary[normalizedMethod] = (paymentSummary[normalizedMethod] || 0) + Number(amtStr || 0);
+          } else {
+            // 單一支付方式不帶金額："cash" - 使用訂單總金額
+            const normalizedMethod = pmStr.toLowerCase() || 'cash';
+            paymentSummary[normalizedMethod] = (paymentSummary[normalizedMethod] || 0) + total;
+          }
+        }
+        
+        totalDiscount += discount;
+        totalIncome += total;
+        
+        // 計算找續
+        if (o.changeAmount !== undefined) {
+          totalChange += Number(o.changeAmount || 0);
+        } else if (o.change !== undefined) {
+          totalChange += Number(o.change || 0);
+        }
+      });
+      
+      // 寫入結算資訊到表單頂部
+      let currentRow = 1;
+      
+      // 第1列：結算編號
+      detailSheet.getRange(currentRow, 1).setValue('結算編號');
+      detailSheet.getRange(currentRow, 2).setValue(batchId);
+      currentRow++;
+      
+      // 空一列
+      currentRow++;
+      
+      // 支付與金額彙總標題
+      detailSheet.getRange(currentRow, 1).setValue('支付與金額彙總');
+      currentRow++;
+      
+      // 各種付款方式
+      const paymentMethods = [
+        { key: 'cash', label: 'Cash' },
+        { key: 'mpay', label: 'Mpay' },
+        { key: 'code', label: 'Code' }
+      ];
+      paymentMethods.forEach(({ key, label }) => {
+        const amount = paymentSummary[key] || 0;
+        detailSheet.getRange(currentRow, 1).setValue(`付款方式：${label}`);
+        detailSheet.getRange(currentRow, 2).setValue(`$${amount}`);
+        currentRow++;
+      });
+      
+      // 已找續
+      detailSheet.getRange(currentRow, 1).setValue('已找續');
+      detailSheet.getRange(currentRow, 2).setValue(`-$${totalChange}`);
+      currentRow++;
+      
+      // 折扣總數
+      detailSheet.getRange(currentRow, 1).setValue('折扣總數');
+      detailSheet.getRange(currentRow, 2).setValue(`-$${totalDiscount}`);
+      currentRow++;
+      
+      // 總收入
+      detailSheet.getRange(currentRow, 1).setValue('總收入');
+      detailSheet.getRange(currentRow, 2).setValue(`$${totalIncome}`);
+      currentRow++;
+      
+      // 空一列
+      currentRow++;
+      
+      // 明細表頭
+      detailSheet.getRange(currentRow, 1, 1, 11).setValues([[
+        '時間', '訂單編號', '員工', '品項', '小計', '折扣', '總計', '付款方式', '折扣代碼', '刪除者', '刪除時間'
+      ]]);
+      currentRow++;
+      
+      // 寫入訂單明細
       orders.forEach(o => {
         const itemsStr = formatItemsHumanReadable(o.items || []);
-        detailSheet.appendRow([
+        detailSheet.getRange(currentRow, 1, 1, 11).setValues([[
           new Date(o.timestamp || new Date()),
           String(o.orderID || ''),
           String(o.user || ''),
@@ -69,7 +182,8 @@ function doPost(e) {
           String(o.promoCode || ''),
           String(o.deletedBy || ''),
           String(o.deletedAt || '')
-        ]);
+        ]]);
+        currentRow++;
       });
 
       // 寫入產品銷量表到第 13 欄（M 欄）開始
