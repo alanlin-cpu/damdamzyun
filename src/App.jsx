@@ -157,7 +157,8 @@ export default function App() {
       return
     }
 
-    if (isInsufficient) {
+    // 檢查金額是否足夠（包括未填入任何金額的情況）
+    if (totalReceived === 0 || totalReceived < total) {
       pushToast(
         `實收金額不足！應收 $${total}，實收 $${totalReceived}，差額 $${total - totalReceived}`,
         'error',

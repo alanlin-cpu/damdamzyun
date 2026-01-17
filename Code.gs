@@ -31,11 +31,11 @@ function doPost(e) {
 
       // 確保 Settlement 表有正確表頭
       if (settlementSheet.getLastRow() === 0) {
-        settlementSheet.appendRow(['時間', '批次ID', '員工', '總筆數', '小計合計', '折扣合計', '總計合計', '備註']);
+        settlementSheet.appendRow(['時間', '批次ID', '員工', '總筆數', '小計合計', '折扣合計', '總計合計', '備註', '工作表名稱']);
       }
 
       // 寫入結算總表（不含明細 JSON）
-      // 欄位：時間, 批次ID, 員工, 總筆數, 小計合計, 折扣合計, 總計合計, 備註
+      // 欄位：時間, 批次ID, 員工, 總筆數, 小計合計, 折扣合計, 總計合計, 備註, 工作表名稱
       const summaryRow = [
         new Date(),
         batchId,
@@ -44,7 +44,8 @@ function doPost(e) {
         Number(payload.subtotalSum || 0),
         Number(payload.discountSum || 0),
         Number(payload.totalSum || 0),
-        String(payload.note || '')
+        String(payload.note || ''),
+        ''  // 佔位符，會在下面建立工作表後更新
       ];
       settlementSheet.appendRow(summaryRow);
 
@@ -63,6 +64,10 @@ function doPost(e) {
       }
       
       const detailSheet = ss.insertSheet(detailSheetName);
+      
+      // 更新 Settlement 表的第 9 欄（工作表名稱）
+      const lastRow = settlementSheet.getLastRow();
+      settlementSheet.getRange(lastRow, 9).setValue(detailSheetName);
       
       // 計算支付方式彙總（只計算未刪除訂單）
       const paymentSummary = { cash: 0, mpay: 0, code: 0 };  // 初始化所有支付方式
@@ -211,9 +216,9 @@ function doPost(e) {
 
       // 清空 orders 工作表內容（保留表頭第1列）
       const ordersSheet = ss.getSheetByName(ORDERS_SHEET) || ss.insertSheet(ORDERS_SHEET);
-      const lastRow = ordersSheet.getLastRow();
-      if (lastRow > 1) {
-        ordersSheet.getRange(2, 1, lastRow - 1, ordersSheet.getLastColumn()).clearContent();
+      const lastRowOrders = ordersSheet.getLastRow();
+      if (lastRowOrders > 1) {
+        ordersSheet.getRange(2, 1, lastRowOrders - 1, ordersSheet.getLastColumn()).clearContent();
       }
 
       const logsSheet = ss.getSheetByName(LOGS_SHEET) || ss.insertSheet(LOGS_SHEET);
@@ -366,23 +371,37 @@ function doGet(e) {
     if (action === 'getSettledOrderIDs') {
       const settledOrderIDs = [];
       
-      // 讀取 Settlement 表，取得所有批次ID
+      // 讀取 Settlement 表，取得所有結算記錄對應的工作表
       const settlementSheet = ss.getSheetByName('Settlement');
       if (settlementSheet) {
         const settlementValues = settlementSheet.getDataRange().getValues();
-        // 從第2列開始（跳過表頭），第2欄是批次ID
+        // 從第2列開始（跳過表頭），第9欄是工作表名稱
         for (let i = 1; i < settlementValues.length; i++) {
-          const batchId = String(settlementValues[i][1] || '').trim();
-          if (!batchId) continue;
+          const detailSheetName = String(settlementValues[i][8] || '').trim();  // 第9欄（索引8）
+          if (!detailSheetName) continue;
           
           // 讀取對應的批次明細工作表
-          const detailSheet = ss.getSheetByName(batchId);
+          const detailSheet = ss.getSheetByName(detailSheetName);
           if (detailSheet) {
             const detailValues = detailSheet.getDataRange().getValues();
-            // 從第2列開始（跳過表頭），第2欄是訂單編號
+            // 尋找訂單編號列（標題為"訂單編號"，通常在第2欄）
+            let orderIDColumnIndex = 1;  // 預設為第2欄
+            if (detailValues.length > 0) {
+              // 掃描表頭找出「訂單編號」所在的欄位
+              for (let k = 0; k < detailValues[0].length; k++) {
+                if (String(detailValues[0][k] || '').includes('訂單編號')) {
+                  orderIDColumnIndex = k;
+                  break;
+                }
+              }
+            }
+            
+            // 從第2列開始讀取訂單ID
             for (let j = 1; j < detailValues.length; j++) {
-              const orderID = String(detailValues[j][1] || '').trim();
-              if (orderID) settledOrderIDs.push(orderID);
+              const orderID = String(detailValues[j][orderIDColumnIndex] || '').trim();
+              if (orderID && orderID !== '') {
+                settledOrderIDs.push(orderID);
+              }
             }
           }
         }
