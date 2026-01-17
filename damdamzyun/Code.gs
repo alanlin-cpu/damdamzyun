@@ -64,13 +64,18 @@ function doPost(e) {
       
       const detailSheet = ss.insertSheet(detailSheetName);
       
-      // 計算支付方式彙總
+      // 計算支付方式彙總（只計算未刪除訂單）
       const paymentSummary = { cash: 0, mpay: 0, code: 0 };  // 初始化所有支付方式
       let totalChange = 0;
       let totalDiscount = 0;
       let totalIncome = 0;
       
       orders.forEach(o => {
+        // 只計算未刪除的訂單
+        if (o.deletedAt || o.deleted) {
+          return;
+        }
+        
         const discount = Number(o.discountAmount || 0);
         const total = Number(o.total || 0);
         

@@ -554,9 +554,12 @@ export default function App() {
       const discountSum = settledOrders.reduce((s, o) => s + Number(o.discountAmount || 0), 0)
       const totalSum = settledOrders.reduce((s, o) => s + Number(o.total || 0), 0)
 
-      // 計算產品銷量
+      // 計算產品銷量（只計算未刪除的訂單）
       const productCounts = {}
       settledOrders.forEach(o => {
+        // 跳過已刪除的訂單
+        if (o.deletedAt || o.deleted) return
+        
         o.items.forEach(it => {
           productCounts[it.name] = (productCounts[it.name] || 0) + (it.quantity || 1)
         })
@@ -620,9 +623,8 @@ export default function App() {
 
     const handleSettleAllOrders = async () => {
       if (!orders || orders.length === 0) return
-      // 只結算有效訂單（過濾掉已刪除的）
-      const all = orders.filter(o => !o.deleted && !o.deletedAt)
-      if (all.length === 0) return
+      // 結算所有訂單（包括已刪除的），保持完整記錄
+      const all = orders
 
       await sendSettlementToGas(all)
 
