@@ -620,7 +620,9 @@ export default function App() {
 
     const handleSettleAllOrders = async () => {
       if (!orders || orders.length === 0) return
-      const all = [...orders]
+      // 只結算有效訂單（過濾掉已刪除的）
+      const all = orders.filter(o => !o.deleted && !o.deletedAt)
+      if (all.length === 0) return
 
       await sendSettlementToGas(all)
 
