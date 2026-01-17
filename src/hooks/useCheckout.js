@@ -12,7 +12,7 @@ export function useCheckout(subtotal = 0) {
 
   // 應用折扣代碼
   const applyPromoCode = useCallback((code) => {
-    const trimmedCode = (code || '').toString().trim().toUpperCase()
+    const trimmedCode = (code || '').toString().trim()
     
     if (!trimmedCode) {
       setDiscount(null)
