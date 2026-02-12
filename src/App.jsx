@@ -85,7 +85,7 @@ export default function App() {
     handleManualSync()
   }, [user, handleManualSync])
 
-  // Auto-sync on window focus + periodic sync every 10 seconds
+  // Auto-sync on window focus + periodic sync every 1 second
   useEffect(() => {
     if (!user) return
 
@@ -94,7 +94,7 @@ export default function App() {
 
     const syncInterval = setInterval(() => {
       handleManualSync()
-    }, 10000)
+    }, 1000)
 
     return () => {
       window.removeEventListener('focus', onFocus)
