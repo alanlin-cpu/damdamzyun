@@ -7,7 +7,7 @@ import { useOrderSync } from './hooks/useOrderSync'
 import ToastContainer from './components/Toast'
 import './App.css'
 import OrderHistory from './OrderHistory'
-import Menu from './Menu(dam).jsx'
+import Menu from './Menu(Market).jsx'
 import { PromoSelector, PaymentSelector } from './components/CheckoutOptions'
 
 export default function App() {
