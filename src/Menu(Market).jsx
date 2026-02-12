@@ -28,7 +28,8 @@ export const menuItems = [
   { id: 10, name: '1set兩份', price: 60, category: '自拍館' },
   { id: 11, name: '2set四份', price: 60, category: '自拍館' },
   { id: 12, name: '情侶set', price: 99, category: '自拍館' },
-  { id: 7, name: '超大張', price: 128, category: '自拍館' },
+  { id: 7, name: '超大張', price: 88, category: '自拍館' },
+  { id: 9, name: '超大張x2', price: 128, category: '自拍館' },
   
   // 套餐
   //{ id: 16, name: '雙人餐', price: 138, category: 'set' },
