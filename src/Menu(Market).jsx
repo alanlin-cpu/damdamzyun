@@ -23,36 +23,38 @@ export const menuItems = [
   { id: 1, name: 'Mini', price: 30, category: 'film' },
   { id: 2, name: 'Wide', price: 40, category: 'film' },
   { id: 4, name: 'Polaroid 白', price: 50, category: 'film' },
-  { id: 6, name: 'Polaroid 金', price: 65, category: 'film' },  
+  { id: 6, name: 'Polaroid 金', price: 60, category: 'film' },  
   // 自拍館
-  { id: 10, name: '1set兩份', price: 40, category: '自拍館' },
+  { id: 10, name: '1set兩份', price: 60, category: '自拍館' },
   { id: 11, name: '2set四份', price: 60, category: '自拍館' },
   { id: 12, name: '情侶set', price: 99, category: '自拍館' },
+  { id: 7, name: '超大張', price: 128, category: '自拍館' },
   
   // 套餐
-  { id: 16, name: '雙人餐', price: 138, category: 'set' },
-  { id: 17, name: '三人餐', price: 188, category: 'set' },
-  { id: 18, name: '咩都有', price: 228, category: 'set' },
-  { id: 19, name: '今日優惠', price: 228, category: 'set' },
-  { id: 20, name: '聖誕套餐', price: 199, category: 'set' },
+  //{ id: 16, name: '雙人餐', price: 138, category: 'set' },
+  //{ id: 17, name: '三人餐', price: 188, category: 'set' },
+  //{ id: 18, name: '咩都有', price: 228, category: 'set' },
+  //{ id: 19, name: '今日優惠', price: 228, category: 'set' },
+  //{ id: 20, name: '聖誕套餐', price: 199, category: 'set' },
   
   // 零售商品
-  { id: 21, name: 'Fuji一次性菲林', price: 170, category: '零售' },
-  { id: 22, name: 'Kodak一次性菲林 27張', price: 140, category: '零售' },
-  { id: 23, name: 'Kodak一次性菲林 39張', price: 170, category: '零售' },
-  { id: 24, name: 'Mini相紙', price: 145, category: '零售' },
-  { id: 25, name: 'Wide相紙', price: 160, category: '零售' },
-  { id: 26, name: '撕拉片相框', price: 30, category: '零售' },
-  { id: 27, name: 'Mini相框(透明)', price: 20, category: '零售' },
-  { id: 28, name: 'Mini相框(IG)', price: 20, category: '零售' },
-  { id: 29, name: 'Wide相框(透明)', price: 20, category: '零售' },
+  { id: 21, name: '御守', price: 170, category: '零售' },
+  { id: 22, name: '神仙鎖匙扣', price: 25, category: '零售' },
+  { id: 23, name: 'Q版鎖匙扣', price: 170, category: '零售' },
+  { id: 24, name: '毛巾', price: 145, category: '零售' },
+  { id: 25, name: '泡泡', price: 160, category: '零售' },
+  { id: 26, name: '冰糖葫蘆', price: 30, category: '零售' },
+  { id: 27, name: '貼紙', price: 20, category: '零售' },
+  { id: 28, name: '御守相框(IG)', price: 20, category: '零售' },
+  { id: 8, name: '氣球', price: 38, category: '零售' },
+  { id: 31, name: '鑽石卡套', price: 18, category: '零售' },
   
   // 周邊商品
   { id: 13, name: 'Mini CD', price: 45, category: '周邊' },
   { id: 14, name: '半透菲林', price: 40, category: '周邊' },
   { id: 15, name: '菲林鎖匙扣', price: 45, category: '周邊' },
+  { id: 29, name: 'KeyCap', price: 58, category: '周邊' },
   { id: 30, name: '摺機', price: 69, category: '周邊' },
-  { id: 31, name: '大電視', price: 69, category: '周邊' },
   { id: 32, name: '小電視', price: 40, category: '周邊' }
 ]
 
