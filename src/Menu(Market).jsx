@@ -26,7 +26,7 @@ export const menuItems = [
   { id: 6, name: 'Polaroid 金', price: 60, category: 'film' },  
   // 自拍館
   { id: 10, name: '1set兩份', price: 60, category: '自拍館' },
-  { id: 11, name: '2set四份', price: 60, category: '自拍館' },
+  //{ id: 11, name: '2set四份', price: 60, category: '自拍館' },
   { id: 12, name: '情侶set', price: 99, category: '自拍館' },
   { id: 7, name: '超大張', price: 88, category: '自拍館' },
   { id: 9, name: '超大張x2', price: 128, category: '自拍館' },
@@ -39,16 +39,16 @@ export const menuItems = [
   //{ id: 20, name: '聖誕套餐', price: 199, category: 'set' },
   
   // 零售商品
-  { id: 21, name: '御守', price: 170, category: '零售' },
+  { id: 21, name: '御守', price: 32, category: '零售' },
   { id: 22, name: '神仙鎖匙扣', price: 25, category: '零售' },
-  { id: 23, name: 'Q版鎖匙扣', price: 170, category: '零售' },
-  { id: 24, name: '毛巾', price: 145, category: '零售' },
-  { id: 25, name: '泡泡', price: 160, category: '零售' },
-  { id: 26, name: '冰糖葫蘆', price: 30, category: '零售' },
-  { id: 27, name: '貼紙', price: 20, category: '零售' },
-  { id: 28, name: '御守相框(IG)', price: 20, category: '零售' },
-  { id: 8, name: '氣球', price: 38, category: '零售' },
-  { id: 31, name: '鑽石卡套', price: 18, category: '零售' },
+  { id: 23, name: 'Q版鎖匙扣', price: 22, category: '零售' },
+  { id: 24, name: '毛巾', price: 28, category: '零售' },
+  { id: 25, name: '泡泡', price: 20, category: '零售' },
+  { id: 26, name: '冰糖葫蘆', price: 18, category: '零售' },
+  { id: 27, name: '貼紙', price: 18, category: '零售' },
+  { id: 28, name: '御守相框(IG)', price: 25, category: '零售' },
+  { id: 8, name: '氣球', price: 38 , category: '零售' },
+  { id: 31, name: '鑽石卡套', price: 18 , category: '零售' },
   
   // 周邊商品
   { id: 13, name: 'Mini CD', price: 45, category: '周邊' },
