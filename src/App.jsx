@@ -26,7 +26,8 @@ export default function App() {
     loadOrdersFromApi,
     loadOrdersFromSheet,
     processSyncResult,
-    handleManualSync: handleManualSyncFromHook
+    handleManualSync: handleManualSyncFromHook,
+    recentSubmissionsRef
   } = useOrderSync()
 
   // Auth state
@@ -197,6 +198,14 @@ export default function App() {
       deletedBy: null,
       deletedAt: null
     }
+    pushToast('已送出訂單！', 'success')
+
+    // 記錄到 recentSubmissionsRef 以供寬限期檢查
+    try {
+      if (recentSubmissionsRef && recentSubmissionsRef.current && orderID) {
+        recentSubmissionsRef.current.set(orderID, Date.now())
+      }
+    } catch (_) {}
 
     pushToast('已送出訂單！', 'success')
 
@@ -305,28 +314,42 @@ export default function App() {
     return { batchId }
   }, [user])
 
+  // 送出結算後主動觸發一次同步，確保已結算的訂單會被 hook 掃到並歸檔
+  const triggerSyncAfterSettlement = useCallback(async () => {
+    try {
+      await handleManualSyncFromHook(pushToast)
+    } catch (e) {
+      // ignore
+    }
+  }, [handleManualSyncFromHook, pushToast])
+
   // Settle selected orders
   const handleSettleOrders = useCallback(async (indicesToSettle) => {
     const settled = indicesToSettle.map(i => orders[i]).filter(Boolean)
     if (settled.length === 0) return
 
-    await sendSettlementToGas(settled)
+    const { batchId } = await sendSettlementToGas(settled)
 
     setArchives((prev) => [...prev, { id: Date.now(), timestamp: new Date().toISOString(), orders: settled }])
+
     const remaining = orders.filter((_, idx) => !indicesToSettle.includes(idx))
     setOrders(remaining)
     saveOrdersToLocal(remaining)
+
+    // 主動觸發一次同步，確保其他裝置或本機的 hook 能掃到已結算訂單並進行歸檔
+    triggerSyncAfterSettlement()
   }, [orders, sendSettlementToGas, setArchives, setOrders, saveOrdersToLocal])
 
   // Settle all orders
   const handleSettleAllOrders = useCallback(async () => {
     if (!orders || orders.length === 0) return
-
-    await sendSettlementToGas(orders)
+    const { batchId } = await sendSettlementToGas(orders)
 
     setArchives((prev) => [...prev, { id: Date.now(), timestamp: new Date().toISOString(), orders }])
     setOrders([])
     saveOrdersToLocal([])
+
+    triggerSyncAfterSettlement()
   }, [orders, sendSettlementToGas, setArchives, setOrders, saveOrdersToLocal])
 
   // Retry upload

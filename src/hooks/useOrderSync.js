@@ -60,7 +60,7 @@ export function useOrderSync() {
     return new Set(
       archives.flatMap(a => 
         (Array.isArray(a.orders) ? a.orders : [])
-          .map(o => o.orderID || computeOrderID(o.timestamp))
+          .map(o => String(o.orderID || computeOrderID(o.timestamp)))
           .filter(Boolean)
       )
     )
@@ -82,7 +82,7 @@ export function useOrderSync() {
       const parsed = rows.slice(1).map(r => {
         const c = r.c || []
         const ts = c[0]?.v || new Date().toISOString()
-        const orderID = c[1]?.v || computeOrderID(ts)
+        const orderID = String(c[1]?.v || computeOrderID(ts))
         const uname = c[2]?.v || ''
         let items = []
         try { items = JSON.parse(c[3]?.v || '[]') } catch (_) {}
@@ -109,7 +109,7 @@ export function useOrderSync() {
         }
       }).filter(o => o.orderID && String(o.orderID).length > 5)
 
-      const remoteIDs = new Set(parsed.map(o => o.orderID).filter(Boolean))
+      const remoteIDs = new Set(parsed.map(o => String(o.orderID)).filter(Boolean))
       setLastRemoteIDs(remoteIDs)
 
       return { remoteIDs, remoteOrders: parsed }
@@ -131,11 +131,13 @@ export function useOrderSync() {
       
       if (list.length === 0) return { remoteIDs: new Set(), remoteOrders: [] }
 
-      const remoteIDs = new Set(list.map(o => o.orderID).filter(Boolean))
+      const remoteIDs = new Set(list.map(o => String(o.orderID)).filter(Boolean))
       setLastRemoteIDs(remoteIDs)
 
       // Fallback：若 items 為空但有 itemsStr，嘗試解析
       list.forEach(o => {
+        // normalize orderID to string to avoid type mismatches
+        o.orderID = String(o.orderID || computeOrderID(o.timestamp))
         if ((!o.items || o.items.length === 0) && o.itemsStr) {
           try {
             o.items = JSON.parse(o.itemsStr)
@@ -168,13 +170,13 @@ export function useOrderSync() {
     const archivedIDs = new Set(
       archives.flatMap(a => 
         (Array.isArray(a.orders) ? a.orders : [])
-          .map(o => o.orderID || computeOrderID(o.timestamp))
+          .map(o => String(o.orderID || computeOrderID(o.timestamp)))
           .filter(Boolean)
       )
     )
     
     // 步驟1：處理已在遠端結算的訂單
-    const ordersToArchive = prevOrders.filter(o => settledIDs.has(o.orderID))
+    const ordersToArchive = prevOrders.filter(o => settledIDs.has(String(o.orderID)))
     if (ordersToArchive.length > 0) {
       setArchives(prev => [...prev, {
         id: Date.now(),
@@ -187,11 +189,11 @@ export function useOrderSync() {
     // 步驟2：合併遠端訂單
     const incomingOrders = remoteOrders.filter(o => 
       o.orderID && 
-      !archivedIDs.has(o.orderID) && 
-      !settledIDs.has(o.orderID)
+      !archivedIDs.has(String(o.orderID)) && 
+      !settledIDs.has(String(o.orderID))
     )
     
-    let merged = [...prevOrders.filter(o => !settledIDs.has(o.orderID))]
+    let merged = [...prevOrders.filter(o => !settledIDs.has(String(o.orderID)))]
     
     incomingOrders.forEach(remoteOrder => {
       const idx = merged.findIndex(localOrder => localOrder.orderID === remoteOrder.orderID)
@@ -203,7 +205,7 @@ export function useOrderSync() {
     })
     
     // 步驟3：計算同步失敗的訂單
-    const localIDs = new Set(merged.map(o => o.orderID).filter(Boolean))
+    const localIDs = new Set(merged.map(o => String(o.orderID)).filter(Boolean))
     const nextFailed = new Set()
     
     localIDs.forEach(id => { 
@@ -227,9 +229,9 @@ export function useOrderSync() {
       
       let settledIDs = new Set()
       try {
-        const settledResponse = await fetch(`${GAS_URL}?action=getSettledOrderIDs`)
-        const settledData = await settledResponse.json()
-        settledIDs = new Set(settledData.settledOrderIDs || [])
+          const settledResponse = await fetch(`${GAS_URL}?action=getSettledOrderIDs`)
+          const settledData = await settledResponse.json()
+          settledIDs = new Set((settledData.settledOrderIDs || []).map(String))
       } catch (err) {
         console.warn('獲取已結算訂單ID失敗', err)
       }

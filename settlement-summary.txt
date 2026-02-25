@@ -1,0 +1,70 @@
+結算架構與流程摘要
+
+1) 概念總覽
+- 結算，把目前未結帳的訂單（orders）以批次寫到後端 Google Sheets（Summary + Detail sheet）。
+- 前端會把該批訂單備份到本地的 archives，並從本地 orders 中移除。
+- 其他裝置透過 getSettledOrderIDs 判定哪些訂單已結算並自動歸檔。
+
+2) 關鍵組件與函數
+- 前端（UI）
+  - `handleSettleOrders` / `handleSettleAllOrders` — src/App.jsx
+  - `sendSettlementToGas()`（組 payload、POST 到 GAS_URL） — src/App.jsx
+- 後端（GAS / Code.gs）
+  - `doPost(e)` action==='settlement'：寫入 Settlement summary、建立/寫入 detail sheet、清空 orders、寫 Logs，回傳 { status:'ok', batchId }
+  - `doGet(e)` action==='getSettledOrderIDs'：掃描 detail sheets 並回傳 settledOrderIDs
+- 同步 / 處理（前端 hook）
+  - `handleManualSync()` / `loadOrdersFromApi()` / `loadOrdersFromSheet()` — src/hooks/useOrderSync.js
+  - `processSyncResult()`：將屬於 settledIDs 的本地訂單移入 archives 並從 orders 移除
+- 本地儲存
+  - `saveArchivesToLocal()` → localStorage（key: "archives"）
+
+3) 詳細步驟（流程）
+- 使用者點選結算 → 前端組 payload（含 orders、batchId、彙總數據）→ POST 到 GAS
+- GAS：append 一列到 Settlement (summary)，建立 detail sheet 並把每筆訂單寫入（orderID 在第2欄），清空 orders，寫入 Logs，回傳 batchId
+- 前端：收到請求後立刻把該批加入本地 `archives`（React state），呼叫 `saveArchivesToLocal()`，並從本地 `orders` 移除/清空；然後觸發一次同步（handleManualSync）以讓 hook 讀取 settledIDs 並在其他裝置上歸檔
+- 其他裝置/後續同步：load remote orders + getSettledOrderIDs；processSyncResult 將已結算訂單歸檔到本地 archives 並移除 orders
+
+4) 資料儲存位置
+- 後端（Google Sheets）
+  - `Settlement` summary sheet：每次結算一列，包含 batchId 與明細 sheet 名稱（第9欄）
+  - detail sheet（例如 MM-DD 或帶序號）：每列一筆訂單，第二欄為 orderID；getSettledOrderIDs 掃描此欄以組成 settledOrderIDs
+  - `orders` sheet：結算後會被清空（遠端主表不再保留已結算訂單）
+- 前端（local）
+  - `archives`（React state），並透過 localStorage（key: "archives"）持久化
+
+5) 常見故障模式與對策
+- 型別不一致（數字 vs 字串）：會導致 settledIDs 比對失敗 → 對策：前後端與比較處統一用 `String(orderID)` 正規化
+- Race condition（detail sheet 尚未被掃到時就清掉本地 orders）：對策：前端送出結算後觸發一次同步以取得 settledIDs（已實作）；也可延遲清除本地或等待後端確認
+- 刪除後端 detail sheet：會導致 getSettledOrderIDs 找不到該批 orderID，其他裝置無法自動歸檔 → 建議先備份再刪除或重建明細
+
+6) 調試檢查清單（快速）
+- 檢查本地 archives：在 DevTools Console 執行 `JSON.parse(localStorage.getItem('archives')||'[]')`
+- 檢查後端 settled IDs：`fetch('<GAS_URL>?action=getSettledOrderIDs').then(r=>r.json()).then(console.log)`
+- 檢查後端日誌：打開 Google Sheet 的 `Logs` 工作表，找 `doPost_settlement` 條目並確認 batchId
+
+7) 建議與最佳實務
+- 不要直接刪除 Settlement detail sheets；若要清理，先導出/備份
+- 在前端、後端與比對時統一以字串形式處理 orderID
+- 結算後保留短暫 recent-submission 記錄（例如 2 分鐘）以避免誤判同步失敗
+- 若需分享給非技術人員，可把 Mermaid 產生的 SVG 放到 `docs/` 並在 README 加簡短說明
+
+-- end --
+
+8) 安全移動 / 刪除 detail sheet 的操作建議
+- 先備份：若要移動或刪除 detail sheet，先在 Google Sheets 裡把該 sheet 匯出為 CSV 或複製整個 spreadsheet（避免直接刪除）。
+- 不要跨 spreadsheet 移動：`getSettledOrderIDs` 目前只會掃描同一個 spreadsheet 的 detail sheets。若把 detail sheet 移到另一個 spreadsheet，系統將找不到該批已結算的 orderID，會導致其他裝置無法自動歸檔。
+- 若必須移動：
+  - 步驟 1：在目標位置保存一份 CSV 或複本備份；
+  - 步驟 2：在原 spreadsheet 保留一個只含 orderID 的 detail sheet（或把內容備份後清除但保留 sheet 標題），以確保 `getSettledOrderIDs` 還能找到該批 orderID；
+  - 步驟 3（選項）：若要把 detail sheet 完全移走，請同步修改後端邏輯（`Code.gs`）以指向新的位置或改為掃描外部來源（需改程式）。
+- 刪除前檢查：在刪除或清空 detail sheet 前，請確認所有裝置的 local `archives` 已包含該批 order（可用 `JSON.parse(localStorage.getItem('archives')||'[]')` 檢查），並且 `fetch(GAS_URL?action=getSettledOrderIDs)` 能回傳該批 orderID。
+
+9) `archives` 問題的操作建議與注意事項
+- 不會從 `archives` 自動恢復：前端的 `archives` 是 local 的備份；若後端 detail sheet 被刪除或遺失，其他裝置若無法透過 `getSettledOrderIDs` 得到已結算的 ID，就無法自動把本地 `orders` 歸檔，這可能造成看起來「訂單又回來」的情況。
+- 安全清理步驟：若要清理舊的 `archives` 條目，建議先匯出整個 `archives`（localStorage）為 JSON 檔，再逐批驗證每筆 orderID 是否已在後端 detail sheets 中出現：
+  - 匯出 local archives：在瀏覽器 Console 執行 `const a=JSON.parse(localStorage.getItem('archives')||'[]'); console.log(a);` 並複製/下載結果。
+  - 驗證 settled：`fetch('<GAS_URL>?action=getSettledOrderIDs').then(r=>r.json()).then(ids=>{ /* 檢查 ids 包含哪些 archives */ })`
+  - 確定所有裝置同步完畢且 `getSettledOrderIDs` 含有對應 ID 再刪除本地備份。
+- 臨時應對：若發現有訂單從遠端被移除但本地仍出現，先在受影響裝置上手動觸發一次同步（或重開 app），並檢查 `recentSubmissions`（若是剛提交的訂單，給予 2 分鐘寬限期）。
+
+若需要，我可以把這些操作步驟簡化成非技術員工可跟隨的檢查清單或自動化腳本（例如匯出 archives 的按鈕或一鍵匯出 CSV 的 Apps Script）。
